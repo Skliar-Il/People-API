@@ -1,0 +1,216 @@
+basePath: /api
+definitions:
+  dto.CreatePeopleDTO:
+    properties:
+      last_name:
+        minLength: 2
+        type: string
+      name:
+        minLength: 2
+        type: string
+      patronymic:
+        type: string
+    required:
+    - last_name
+    - name
+    type: object
+  dto.PeopleDTO:
+    properties:
+      age:
+        type: integer
+      gender:
+        type: string
+      last_name:
+        type: string
+      name:
+        type: string
+      nationalize:
+        type: string
+      patronymic:
+        type: string
+    required:
+    - age
+    - gender
+    - last_name
+    - name
+    - nationalize
+    type: object
+  dto.PeopleFullDTO:
+    properties:
+      age:
+        type: integer
+      gender:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      name:
+        type: string
+      nationalize:
+        type: string
+      patronymic:
+        type: string
+    required:
+    - age
+    - gender
+    - last_name
+    - name
+    - nationalize
+    type: object
+info:
+  contact: {}
+  title: People statistic
+  version: "1.0"
+paths:
+  /people:
+    get:
+      parameters:
+      - description: Фильтр по имени
+        in: query
+        name: name
+        type: string
+      - description: Фильтр по фамилии
+        in: query
+        name: last_name
+        type: string
+      - description: Фильтр по отчеству
+        in: query
+        name: patronymic
+        type: string
+      - description: Фильтр по возрасту
+        in: query
+        name: age
+        type: integer
+      - description: Фильтр по национальности
+        in: query
+        name: nationalize
+        type: string
+      - description: Фильтр по полу
+        in: query
+        name: gender
+        type: string
+      - default: 1
+        description: Номер страницы
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Лимит записей
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.PeopleFullDTO'
+            type: array
+        "400":
+          description: Bad Request
+      summary: Получить список людей с фильтрацией
+      tags:
+      - People
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Данные для создания
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreatePeopleDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: ID созданного человека
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "422":
+          description: Unprocessable Entity
+      security:
+      - ApiKeyAuth: []
+      summary: Создать нового человека
+      tags:
+      - People
+  /people/{id}:
+    delete:
+      parameters:
+      - description: UUID человека
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+      security:
+      - ApiKeyAuth: []
+      summary: Удалить человека
+      tags:
+      - People
+    get:
+      parameters:
+      - description: UUID человека
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.PeopleFullDTO'
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+      summary: Получить человека по ID
+      tags:
+      - People
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: UUID человека
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Обновляемые данные
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PeopleDTO'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+      security:
+      - ApiKeyAuth: []
+      summary: Обновить данные человека
+      tags:
+      - People
+swagger: "2.0"

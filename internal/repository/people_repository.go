@@ -11,7 +11,7 @@ import (
 type PeopleRepositoryInterface interface {
 	Create(ctx context.Context, tx pgx.Tx, people *dto.PeopleDTO) (uuid.UUID, error)
 	GetById(ctx context.Context, tx pgx.Tx, id uuid.UUID) (*dto.PeopleDTO, error)
-	GetList(ctx context.Context, tx pgx.Tx, filter *dto.GetPeoplesDTO) ([]*dto.PeopleDTO, error)
+	GetList(ctx context.Context, tx pgx.Tx, filter *dto.GetPeoplesDTO) ([]*dto.PeopleFullDTO, error)
 	Delete(ctx context.Context, tx pgx.Tx, id uuid.UUID) error
 	Update(ctx context.Context, tx pgx.Tx, id uuid.UUID, people *dto.PeopleDTO) error
 }
@@ -61,9 +61,9 @@ func (PeopleRepository) GetById(ctx context.Context, tx pgx.Tx, id uuid.UUID) (*
 	return &people, err
 }
 
-func (PeopleRepository) GetList(ctx context.Context, tx pgx.Tx, filter *dto.GetPeoplesDTO) ([]*dto.PeopleDTO, error) {
+func (PeopleRepository) GetList(ctx context.Context, tx pgx.Tx, filter *dto.GetPeoplesDTO) ([]*dto.PeopleFullDTO, error) {
 	query := `
-		select name, last_name, patronymic, age, gender, nationalize
+		select id, name, last_name, patronymic, age, gender, nationalize
 		from people
 		where 1=1`
 	var args []interface{}
@@ -80,7 +80,7 @@ func (PeopleRepository) GetList(ctx context.Context, tx pgx.Tx, filter *dto.GetP
 	addConditionLike := func(field, value string) {
 		if value != "" {
 			argsCount++
-			query += fmt.Sprintf(" %s like $%d", field, argsCount)
+			query += fmt.Sprintf(" and %s like $%d", field, argsCount)
 			args = append(args, "%"+value+"%")
 		}
 	}
@@ -104,7 +104,7 @@ func (PeopleRepository) GetList(ctx context.Context, tx pgx.Tx, filter *dto.GetP
 		}
 	}
 
-	var peoples []*dto.PeopleDTO
+	var peoples []*dto.PeopleFullDTO
 	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -112,8 +112,8 @@ func (PeopleRepository) GetList(ctx context.Context, tx pgx.Tx, filter *dto.GetP
 	defer rows.Close()
 
 	for rows.Next() {
-		var p dto.PeopleDTO
-		if err := rows.Scan(&p.Name, &p.LastName, &p.Patronymic, &p.Age, &p.Gender, &p.Nationalize); err != nil {
+		var p dto.PeopleFullDTO
+		if err := rows.Scan(&p.ID, &p.Name, &p.LastName, &p.Patronymic, &p.Age, &p.Gender, &p.Nationalize); err != nil {
 			return nil, err
 		}
 		peoples = append(peoples, &p)

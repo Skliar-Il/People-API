@@ -21,6 +21,17 @@ func NewPeopleHandler(peopleService service.PeopleServiceInterface) *PeopleHandl
 	}
 }
 
+// CreatePeople godoc
+// @Summary Создать нового человека
+// @Tags People
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param input body dto.CreatePeopleDTO true "Данные для создания"
+// @Success 201 {object} uuid.UUID "ID созданного человека"
+// @Failure 400
+// @Failure 422
+// @Router /people [post]
 func (p *PeopleHandler) CreatePeople(c fiber.Ctx) error {
 	localLogger := logger.GetLoggerFromCtx(c.Context())
 
@@ -38,6 +49,15 @@ func (p *PeopleHandler) CreatePeople(c fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(id)
 }
 
+// GetPeople godoc
+// @Summary Получить человека по ID
+// @Tags People
+// @Produce json
+// @Param id path string true "UUID человека" format(uuid)
+// @Success 200 {object} dto.PeopleFullDTO
+// @Failure 400
+// @Failure 404
+// @Router /people/{id} [get]
 func (p *PeopleHandler) GetPeople(c fiber.Ctx) error {
 	localLogger := logger.GetLoggerFromCtx(c.Context())
 
@@ -56,6 +76,50 @@ func (p *PeopleHandler) GetPeople(c fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(people)
 }
 
+// GetPeopleList godoc
+// @Summary Получить список людей с фильтрацией
+// @Tags People
+// @Produce json
+// @Param name query string false "Фильтр по имени"
+// @Param last_name query string false "Фильтр по фамилии"
+// @Param patronymic query string false "Фильтр по отчеству"
+// @Param age query int false "Фильтр по возрасту"
+// @Param nationalize query string false "Фильтр по национальности"
+// @Param gender query string false "Фильтр по полу"
+// @Param page query int false "Номер страницы" default(1)
+// @Param limit query int false "Лимит записей" default(10)
+// @Success 200 {array} dto.PeopleFullDTO
+// @Failure 400
+// @Router /people [get]
+func (p *PeopleHandler) GetPeopleList(c fiber.Ctx) error {
+	localLogger := logger.GetLoggerFromCtx(c.Context())
+
+	var filters dto.GetPeoplesDTO
+	if err := c.Bind().Query(&filters); err != nil {
+		localLogger.Info(c.Context(), "invalid query params", zap.Error(err))
+		return c.Status(fiber.StatusUnprocessableEntity).JSON(err.Error())
+	}
+
+	peoples, err := p.PeopleService.GetPeoples(c.Context(), &filters)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(peoples)
+}
+
+// UpdatePeople godoc
+// @Summary Обновить данные человека
+// @Tags People
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param id path string true "UUID человека" format(uuid)
+// @Param input body dto.PeopleDTO true "Обновляемые данные"
+// @Success 204
+// @Failure 400
+// @Failure 404
+// @Router /people/{id} [put]
 func (p *PeopleHandler) UpdatePeople(c fiber.Ctx) error {
 	localLogger := logger.GetLoggerFromCtx(c.Context())
 
@@ -78,6 +142,15 @@ func (p *PeopleHandler) UpdatePeople(c fiber.Ctx) error {
 	return c.Status(fiber.StatusNoContent).JSON(nil)
 }
 
+// DeletePeople godoc
+// @Summary Удалить человека
+// @Tags People
+// @Security ApiKeyAuth
+// @Param id path string true "UUID человека" format(uuid)
+// @Success 204
+// @Failure 400
+// @Failure 404
+// @Router /people/{id} [delete]
 func (p *PeopleHandler) DeletePeople(c fiber.Ctx) error {
 	localLogger := logger.GetLoggerFromCtx(c.Context())
 

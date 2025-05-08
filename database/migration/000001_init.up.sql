@@ -5,7 +5,7 @@ create table if not exists people (
     name text not null,
     last_name text not null,
     patronymic text,
-    gender text not null default 'unknown',
+    gender text not null default '',
     age int not null default 0,
-    nationalize text not null default 'unknown'
+    nationalize text not null default ''
 )

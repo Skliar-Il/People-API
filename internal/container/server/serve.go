@@ -8,30 +8,28 @@ import (
 	"github.com/Skliar-Il/People-API/internal/transport/http/controller"
 	"github.com/Skliar-Il/People-API/pkg/exception"
 	"github.com/Skliar-Il/People-API/pkg/logger"
+	pkgvalidator "github.com/Skliar-Il/People-API/pkg/validator"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/cache"
 	"github.com/gofiber/fiber/v3/middleware/cors"
-	"github.com/gofiber/storage/redis/v3"
 	"log"
 	"os/signal"
 	"syscall"
 )
 
-func Serve(cfg *config.Config, storage *redis.Storage, services *initializer.ServiceList) {
+func Serve(cfg *config.Config, services *initializer.ServiceList) {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	server := fiber.New(
 		fiber.Config{
-			ErrorHandler: exception.Handler,
+			ErrorHandler:    exception.Middleware,
+			StructValidator: pkgvalidator.Validator{Validator: validator.New()},
 		},
 	)
 
 	server.Use(cors.New())
-	server.Use(cache.New(cache.Config{
-		Storage: storage,
-	}))
-	server.Use(logger.Middleware())
+	server.Use(logger.Middleware(&cfg.Logger))
 
 	controller.NewController(server, services)
 

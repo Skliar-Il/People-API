@@ -17,6 +17,7 @@ import (
 type PeopleServiceInterface interface {
 	CreatePeople(ctx context.Context, people *dto.CreatePeopleDTO) (*dto.PeopleIdDTO, error)
 	GetPeople(ctx context.Context, id uuid.UUID) (*dto.PeopleDTO, error)
+	GetPeoples(ctx context.Context, filters *dto.GetPeoplesDTO) ([]*dto.PeopleFullDTO, error)
 	UpdatePeople(ctx context.Context, id uuid.UUID, people *dto.PeopleDTO) error
 	DeletePeople(ctx context.Context, id uuid.UUID) error
 }
@@ -106,6 +107,24 @@ func (p *PeopleService) GetPeople(ctx context.Context, id uuid.UUID) (*dto.Peopl
 	}
 
 	return people, err
+}
+
+func (p *PeopleService) GetPeoples(ctx context.Context, filters *dto.GetPeoplesDTO) ([]*dto.PeopleFullDTO, error) {
+	localLogger := logger.GetLoggerFromCtx(ctx)
+	tx, err := p.DBPool.Begin(ctx)
+	if err != nil {
+		localLogger.Error(ctx, "failed start tx")
+		return nil, render.Error(fiber.ErrInternalServerError, "")
+	}
+	defer database.RollbackTx(ctx, tx)
+
+	peoples, err := p.PeopleRepository.GetList(ctx, tx, filters)
+	if err != nil {
+		localLogger.Error(ctx, "get peoples error", zap.Error(err))
+		return nil, render.Error(fiber.ErrInternalServerError, "")
+	}
+
+	return peoples, nil
 }
 
 func (p *PeopleService) UpdatePeople(ctx context.Context, id uuid.UUID, people *dto.PeopleDTO) error {

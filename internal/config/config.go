@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/Skliar-Il/People-API/internal/transport/http/client"
 	"github.com/Skliar-Il/People-API/pkg/database"
+	"github.com/Skliar-Il/People-API/pkg/logger"
 	"github.com/Skliar-Il/People-API/pkg/redis"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
@@ -17,6 +18,7 @@ type Config struct {
 	DataBase database.Config `env:"POSTGRES"`
 	Redis    redis.Config    `env:"REDIS"`
 	Client   client.Config   `env:"LINK"`
+	Logger   logger.Config   `env:"LOGGER"`
 }
 
 func New() (*Config, error) {

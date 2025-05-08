@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"log"
 	"time"
 )
 
@@ -14,6 +15,10 @@ const (
 	RequestId KeyLoggerType = "request_id"
 	lKey      KeyLoggerType = "logger"
 )
+
+type Config struct {
+	Mode string `env:"LOGGER_MOD" default:"debug"`
+}
 
 type Logger struct {
 	l *zap.Logger
@@ -59,7 +64,10 @@ func (l *Logger) Fatal(ctx context.Context, msg string, fields ...zap.Field) {
 	l.l.Fatal(msg, fields...)
 }
 
-func Middleware() fiber.Handler {
+func Middleware(cfg *Config) fiber.Handler {
+	if cfg.Mode != "debug" && cfg.Mode != "production" {
+		log.Fatalf("invalid logger mod")
+	}
 	return func(c fiber.Ctx) error {
 		guid := uuid.New().String()
 		ctx := context.WithValue(c.Context(), RequestId, guid)
@@ -74,12 +82,20 @@ func Middleware() fiber.Handler {
 
 		c.SetContext(ctx)
 
-		GetLoggerFromCtx(ctx).Info(ctx,
-			"Request HTTP",
-			zap.String("method", c.Method()),
-			zap.String("path", c.Path()),
-			zap.ByteString("body", c.Body()),
-		)
+		if cfg.Mode == "debug" {
+			GetLoggerFromCtx(ctx).Info(ctx,
+				"Request HTTP",
+				zap.String("method", c.Method()),
+				zap.String("path", c.Path()),
+				zap.ByteString("body", c.Body()),
+			)
+		} else if cfg.Mode == "production" {
+			GetLoggerFromCtx(ctx).Info(ctx,
+				"Request HTTP",
+				zap.String("method", c.Method()),
+				zap.String("path", c.Path()),
+			)
+		}
 
 		start := time.Now()
 
@@ -87,11 +103,20 @@ func Middleware() fiber.Handler {
 
 		duration := time.Since(start)
 
-		GetLoggerFromCtx(ctx).Info(ctx,
-			"Response HTTP",
-			zap.Int("status", c.Response().StatusCode()),
-			zap.Duration("duration", duration),
-		)
+		if cfg.Mode == "debug" {
+			GetLoggerFromCtx(ctx).Info(ctx,
+				"Response HTTP",
+				zap.Int("status", c.Response().StatusCode()),
+				zap.String("response", c.Response().String()),
+				zap.Duration("duration", duration),
+			)
+		} else if cfg.Mode == "production" {
+			GetLoggerFromCtx(ctx).Info(ctx,
+				"Response HTTP",
+				zap.Int("status", c.Response().StatusCode()),
+				zap.Duration("duration", duration),
+			)
+		}
 
 		return err
 	}

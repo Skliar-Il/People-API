@@ -6,7 +6,6 @@ import (
 	"github.com/Skliar-Il/People-API/internal/container/initializer"
 	"github.com/Skliar-Il/People-API/internal/container/server"
 	"github.com/Skliar-Il/People-API/pkg/database"
-	"github.com/Skliar-Il/People-API/pkg/redis"
 	"log"
 )
 
@@ -17,11 +16,6 @@ func NewApp() {
 		log.Fatalf("failed load config: %v", err)
 	}
 
-	redisClient, err := redis.New(cfg.Redis)
-	if err != nil {
-		log.Fatalf("start redis error: %v", err)
-	}
-
 	dbPool, err := database.New(ctx, cfg.DataBase)
 	if err != nil {
 		log.Fatalf("init database error: %v", err)
@@ -30,5 +24,5 @@ func NewApp() {
 	repositoryList := initializer.NewRepositoryList()
 	clientList := initializer.NewClientList(&cfg.Client)
 	serviceList := initializer.NewServiceList(repositoryList, clientList, dbPool)
-	server.Serve(cfg, redisClient, serviceList)
+	server.Serve(cfg, serviceList)
 }

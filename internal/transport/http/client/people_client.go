@@ -92,9 +92,9 @@ func (p *PeopleClient) GetGender(ctx context.Context, name string) (string, erro
 	}
 
 	if body.Gender == nil {
-		return "unknown", nil
+		return "", nil
 	}
-	
+
 	return *body.Gender, nil
 
 }
@@ -127,7 +127,7 @@ func (p *PeopleClient) GetNationalize(ctx context.Context, name string) (string,
 	}
 
 	if len(body.Country) == 0 {
-		return "unknown", nil
+		return "", nil
 	}
 
 	return body.Country[0].CountryId, nil
